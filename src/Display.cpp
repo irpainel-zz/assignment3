@@ -160,9 +160,9 @@ void Display::initTexture()
 
 	//materials
 	torus->material->ambient = glm::vec4(1.0, 0.f, 0.f, 1.f);
-	torus->material->diffuse = glm::vec4(1.f, 0.f, 0.f, 1.f);
-	torus->material->specular = glm::vec4(0.6f, 0.6f, 0.6f, 1.f);
-	torus->material->shininess =50;
+	torus->material->diffuse = glm::vec4(0.6f, 0.f, 0.f, 1.f);
+	torus->material->specular = glm::vec4(0.4f, 0.4f, 0.4f, 1.f);
+	torus->material->shininess =80;
 
 	bunny->material->ambient = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 	bunny->material->diffuse = glm::vec4(0.8f, 0.8f, 0.8f, 1.0f);

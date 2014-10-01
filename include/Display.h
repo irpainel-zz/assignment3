@@ -73,7 +73,7 @@ private:
 	int spotYaw, spotPitch;
 	GLUquadric* quad;
 
-	//shader
+	//shader programs
 	GLuint phong, tex, bump, cubemap;
 
 
