@@ -18,7 +18,7 @@
 #include "define.h"
 #include <stdio.h>
 #include <math.h>
-#include <GL/gl.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 
@@ -58,19 +58,21 @@ public:
 
 	//texture
 	TextureInfo t;
+	TextureInfo tCubeMap;
+	GLuint texCubeName;
 	GLuint texName;
 	int hasTexture;
+	int hasCubemap;
 
 	//material
 	Material *material;
 
-public:
 	void RenderGeometry();     // mode : G308_SHADE_POLYGON, G308_SHADE_WIREFRAME
 	void toggleMode(); //Switch between showing filled polygons and wireframes
 	void readTexture(char* filename, float texScale);
 	void CreateGLPolyGeometry(); // [Assignment1] Create GL Display List for Polygon Geometry
 	void CreateGLWireGeometry(); // [Assignment1] Create GL Display List for Wireframe Geometry
-
+	void toggleCubemap();
 private:
 
 	float textureScale;
@@ -80,6 +82,8 @@ private:
 
 	G308_Point calcNormal(G308_Point v1, G308_Point v2, G308_Point v3);
 	G308_Point calcVertexNormal(int vertex);
+	void loadFace(GLenum target, const char *fn);
+	void makeCubeMap();
 };
 
 
