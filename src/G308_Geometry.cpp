@@ -40,6 +40,7 @@ G308_Geometry::G308_Geometry(const char *filename) {
 
 	textureScale = 1.0;
 	hasTexture = FALSE;
+	hasCubemap = FALSE;
 
 }
 
@@ -515,9 +516,10 @@ void G308_Geometry::RenderGeometry() {
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glBindTexture(GL_TEXTURE_2D, texName);
 	}
-	//Red plastic
-
-	//TODO initialize with some material
+	if (hasCubemap)
+	{
+		makeCubeMap();
+	}
 	glEnable(GL_NORMALIZE);
 
 	glMaterialfv(GL_FRONT, GL_AMBIENT, &material->ambient[0]);
@@ -536,6 +538,14 @@ void G308_Geometry::RenderGeometry() {
 			glDisable(GL_ALPHA);
 		}
 		glDisable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	if (hasCubemap)
+	{
+		glDisable(GL_TEXTURE_CUBE_MAP);
+		glDisable(GL_TEXTURE_GEN_S);
+		glDisable(GL_TEXTURE_GEN_T);
+		glDisable(GL_TEXTURE_GEN_R);
 	}
 }
 
@@ -573,8 +583,8 @@ void G308_Geometry::readTexture(char* filename, float texScale) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 
 	//Only useful for PNG files, since JPEG doesn't support alpha
 	if (t.hasAlpha) {
@@ -593,11 +603,90 @@ void G308_Geometry::readTexture(char* filename, float texScale) {
 }
 
 
+void G308_Geometry::makeCubeMap()
+{
+	int i;
+	//glEnable(GL_DEPTH_TEST);
+	static GLenum faceTarget[6] = {
+	  GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+	  GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+	  GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+	  GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+	  GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+	  GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+	};
+
+	const char *faceFile[6] =  {
+	  "textures/left.jpg",
+	  "textures/right.jpg",
+	  "textures/top.jpg",
+	  "textures/bottom.jpg",
+	  "textures/back.jpg",
+	  "textures/front.jpg",
+	};
+	glEnable(GL_TEXTURE_CUBE_MAP);
+	glGenTextures(1, &texCubeName);
+	for (i=0; i<6; i++) {
+		loadFace(faceTarget[i], faceFile[i]);
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 
+	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
+	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
+	glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
 
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
+	glEnable(GL_TEXTURE_GEN_S);
+	glEnable(GL_TEXTURE_GEN_T);
+	glEnable(GL_TEXTURE_GEN_R);
+}
 
+void G308_Geometry::loadFace(GLenum target, const char *fn)
+{
+	unsigned int i;
+	char filename[50];
+	strcpy(filename, fn);
+
+		for (i = 0; i < strlen(filename); i++) {
+			if (filename[i] == '.') {
+				break;
+			}
+		}
+		char extension[5];
+		strcpy(extension, &filename[i + 1]);
+		//printf(extension);
+		if (strcmp(extension, "jpg") == 0 || strcmp(extension, "jpeg") == 0)
+			G308_ImageLoader::loadTextureFromJPEG(filename, &tCubeMap);
+		else if (strcmp(extension, "png") == 0)
+			G308_ImageLoader::loadTextureFromPNG(filename, &tCubeMap);
+		else {
+			printf("Invalid format. Only supports JPEG and PNG.\n");
+			exit(1);
+		}
+
+		//Only useful for PNG files, since JPEG doesn't support alpha
+		if (tCubeMap.hasAlpha) {
+			glTexImage2D(target, 0, GL_RGBA, tCubeMap.width, tCubeMap.height, 0, GL_RGBA,
+					GL_UNSIGNED_BYTE, tCubeMap.textureData);
+		} else {
+			glTexImage2D(target, 0, GL_RGB, tCubeMap.width, tCubeMap.height, 0, GL_RGB,
+					GL_UNSIGNED_BYTE, tCubeMap.textureData);
+		}
+
+		//Once the texture has been loaded by GL, we don't need this anymore.
+		free(tCubeMap.textureData);
+
+}
+
+void G308_Geometry::toggleCubemap()
+{
+	hasCubemap = TRUE-hasCubemap;
+}
 
 
 

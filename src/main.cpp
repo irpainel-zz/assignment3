@@ -16,7 +16,9 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
+#include "textfile.h"
 
 // My definition
 #include "define.h"
@@ -30,12 +32,16 @@ GLuint g_mainWnd;
 GLuint g_nWinWidth  = G308_WIN_WIDTH;
 GLuint g_nWinHeight = G308_WIN_HEIGHT;
 Display *display = NULL;
+int mouseButton;
 
 void G308_Display() ;
 void G308_Reshape(int w, int h) ;
 void G308_SetCamera();
 void G308_SetLight();
 void keyboardListener(unsigned char key, int x, int y);
+void mouseButtonPress(int button, int state, int x, int y);
+void mouseMove(int x, int y);
+
 
 int main(int argc, char** argv)
 {
@@ -45,6 +51,9 @@ int main(int argc, char** argv)
     g_mainWnd = glutCreateWindow("COMP308 Assignment3");
 
     glutKeyboardFunc(keyboardListener);
+    glutMouseFunc(mouseButtonPress);
+    glutMotionFunc(mouseMove);
+
     glutDisplayFunc(G308_Display);
     glutReshapeFunc(G308_Reshape);
 
@@ -52,6 +61,16 @@ int main(int argc, char** argv)
 
 	G308_SetLight();
 	G308_SetCamera();
+
+	glewInit();
+	if (glewIsSupported("GL_VERSION_2_0"))
+		printf("OpenGL 2.0 supported.\n");
+	else {
+		printf("OpenGL 2.0 not supported !\n");
+		exit(1);
+	}
+	display->setShaders();
+
 	glutMainLoop();
 
 	if(display != NULL) delete display;
@@ -104,7 +123,7 @@ void G308_SetCamera()
 	glLoadIdentity();
 
 
-	gluLookAt(-30.0, 30, 50.0, 0.0, 2.5, 0.0, 0.0, 1.0, 0.0);
+	gluLookAt(20.0, 20, 50.0, 0.0, 2.5, 0.0, 0.0, 1.0, 0.0);
 	//gluLookAt(-2.0, -6.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
 }
@@ -120,8 +139,27 @@ void keyboardListener(unsigned char key, int x, int y) {
 }
 
 
+void mouseButtonPress(int button, int state, int x, int y) {
+	//printf("MouseButtonPress: x: %d y: %d\n", x, y);
+	if (state == GLUT_DOWN)
+	{
+		mouseButton = button;
+		if (button == GLUT_LEFT_BUTTON) //Arcball control
+		{
+			display->arcStart(g_nWinWidth, g_nWinHeight, x, y);
+		}
+	}
+}
 
+void mouseMove(int x, int y) {
+	//printf("MouseMove: x: %d y: %d\n", x, y);
 
+	if (mouseButton == GLUT_LEFT_BUTTON)
+	{
+		display->arcDrag(g_nWinWidth, g_nWinHeight, x, y);
+	}
+	glutPostRedisplay();
+}
 
 
 
